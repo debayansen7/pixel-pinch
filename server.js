@@ -1,0 +1,123 @@
+const express = require('express');
+const multer = require('multer');
+const sharp = require('sharp');
+
+// Initialize the Express application
+const app = express();
+// Use the port provided by the host environment, or default to 3000 locally
+const PORT = process.env.PORT || 3000;
+
+// Configure Multer to store uploaded files in the computer's memory (RAM) temporarily, 
+// rather than saving them directly to the hard drive. This is faster for processing.
+const storage = multer.memoryStorage();
+const upload = multer({
+    storage: storage,
+    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB maximum file size
+    fileFilter: (req, file, cb) => {
+        if (file.mimetype.startsWith('image/')) {
+            cb(null, true); // Accept the file
+        } else {
+            cb(new Error('Only image files are allowed!')); // Reject the file
+        }
+    }
+});
+
+/**
+ * Our API Endpoint
+ * It listens for POST requests at "http://localhost:3000/optimize"
+ * "upload.single('image')" tells Multer to look for a file attached with the name 'image'
+ */
+app.post('/optimize', upload.single('image'), async (req, res) => {
+    try {
+        // 1. Check if the user actually uploaded a file
+        if (!req.file) {
+            return res.status(400).json({ error: 'Please upload an image file.' });
+        }
+
+        // 2. Get the desired format and quality from the request body
+        // If the user doesn't provide them, we use default values (webp, quality 80)
+        const format = req.body.format || 'webp';
+        const quality = parseInt(req.body.quality) || 80;
+        const width = req.body.width ? parseInt(req.body.width) : null;
+        const height = req.body.height ? parseInt(req.body.height) : null;
+
+        // 3. Validate the format to ensure Sharp supports it
+        const allowedFormats = ['jpeg', 'png', 'webp', 'avif'];
+        if (!allowedFormats.includes(format.toLowerCase())) {
+            return res.status(400).json({ error: `Unsupported format. Choose from: ${allowedFormats.join(', ')}` });
+        }
+
+        // 4. Validate the quality number
+        if (quality < 1 || quality > 100) {
+            return res.status(400).json({ error: 'Quality must be a number between 1 and 100.' });
+        }
+
+        // Start the Sharp image pipeline
+        let imagePipeline = sharp(req.file.buffer);
+
+        // If the user provided a width or height, resize the image
+        if (width || height) {
+            // fit: 'inside' ensures the image retains its aspect ratio while fitting within the dimensions
+            imagePipeline = imagePipeline.resize({ width: width, height: height, fit: 'inside' });
+        }
+
+        // 5. THE MAGIC: Process the image using Sharp
+        // We take the file from memory (req.file.buffer), change its format, compress it, 
+        // and output it back into a new memory buffer.
+        const optimizedImageBuffer = await imagePipeline
+            .toFormat(format, { quality: quality })
+            .toBuffer();
+
+        // Calculate file sizes to see the difference
+        const originalSize = req.file.size;
+        const optimizedSize = optimizedImageBuffer.length;
+        const savings = ((1 - (optimizedSize / originalSize)) * 100).toFixed(2);
+
+        // Log the results to the terminal so we can see what changed
+        console.log(`\n--- Optimization Results ---`);
+        console.log(`Original Size: ${(originalSize / 1024).toFixed(2)} KB`);
+        console.log(`Optimized Size: ${(optimizedSize / 1024).toFixed(2)} KB`);
+        console.log(`Space Saved: ${savings}%`);
+        console.log(`----------------------------\n`);
+
+        // 6. Send the newly processed image back to the user
+        res.set('Content-Type', `image/${format}`);
+        res.set('X-Original-Size', originalSize);
+        res.set('X-Optimized-Size', optimizedSize);
+        res.send(optimizedImageBuffer);
+
+    } catch (error) {
+        // If anything goes wrong (e.g., corrupt image file), we catch the error here
+        console.error('Error processing image:', error);
+        res.status(500).json({ error: 'Failed to process the image.' });
+    }
+});
+
+// Global Error Handling Middleware
+// This is crucial for catching errors from multer and other middleware cleanly.
+// It must be defined after all other app.use() and routes.
+app.use((err, req, res, next) => {
+    console.error("An error occurred:", err.message);
+
+    // Handle Multer-specific errors
+    if (err instanceof multer.MulterError) {
+        return res.status(400).json({ error: err.message });
+    }
+
+    // Handle our custom fileFilter error
+    if (err.message === 'Only image files are allowed!') {
+        return res.status(400).json({ error: err.message });
+    }
+
+    // Default to a 500 server error for any other issues
+    res.status(500).json({ error: 'An internal server error occurred.' });
+});
+
+// Start the server and listen for incoming requests
+if (require.main === module) {
+    app.listen(PORT, () => {
+        console.log(`🚀 Image Optimizer API is running at http://localhost:${PORT}`);
+    });
+}
+
+module.exports = app; // Export the app for testing purposes

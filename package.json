@@ -1,0 +1,23 @@
+{
+  "name": "image-optimizer-api",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "jest"
+  },
+  "keywords": [],
+  "author": "Debayan Sen",
+  "license": "MIT",
+  "type": "commonjs",
+  "dependencies": {
+    "express": "^5.2.1",
+    "multer": "^2.1.1",
+    "sharp": "^0.34.5"
+  },
+  "devDependencies": {
+    "jest": "^30.3.0",
+    "supertest": "^7.2.2"
+  }
+}

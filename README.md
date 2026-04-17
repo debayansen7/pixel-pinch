@@ -1,4 +1,4 @@
-# Image Optimizer API
+# PixelPinch Image Optimizer API
 
 A fast and efficient RESTful API built with Node.js and Express that allows users to upload, format, compress, and resize images on the fly. It utilizes the high-performance [Sharp](https://sharp.pixelplumbing.com/) library for image processing.
 

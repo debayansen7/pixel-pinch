@@ -1,6 +1,8 @@
 const express = require('express');
 const multer = require('multer');
 const sharp = require('sharp');
+const fs = require('fs');
+const path = require('path');
 
 // Initialize the Express application
 const app = express();
@@ -22,6 +24,25 @@ const upload = multer({
     }
 });
 
+// Track the number of successful image optimizations
+let apiUsageCount = 0;
+const logFilePath = path.join(__dirname, 'api-requests.log');
+
+// Request & Response Logging Middleware
+app.use((req, res, next) => {
+    const timestamp = new Date().toISOString();
+
+    // res.on('finish') allows us to wait until the request is fully processed so we can log the final status code
+    res.on('finish', () => {
+        const logEntry = `[${timestamp}] Request: ${req.method} ${req.originalUrl} | Status: ${res.statusCode}\n`;
+        fs.appendFile(logFilePath, logEntry, (err) => {
+            if (err) console.error('Failed to write to log file:', err);
+        });
+    });
+
+    next(); // Pass control to the next middleware or route
+});
+
 /**
  * Our API Endpoint
  * It listens for POST requests at "http://localhost:3000/optimize"
@@ -33,6 +54,9 @@ app.post('/optimize', upload.single('image'), async (req, res) => {
         if (!req.file) {
             return res.status(400).json({ error: 'Please upload an image file.' });
         }
+
+        // Increment the usage counter 
+        apiUsageCount++;
 
         // 2. Get the desired format and quality from the request body
         // If the user doesn't provide them, we use default values (webp, quality 80)
@@ -91,6 +115,11 @@ app.post('/optimize', upload.single('image'), async (req, res) => {
         console.error('Error processing image:', error);
         res.status(500).json({ error: 'Failed to process the image.' });
     }
+});
+
+// Endpoint to check API usage statistics
+app.get('/usage', (req, res) => {
+    res.json({ totalOptimizations: apiUsageCount });
 });
 
 // Global Error Handling Middleware

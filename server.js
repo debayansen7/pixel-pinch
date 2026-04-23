@@ -17,7 +17,7 @@ const PORT = process.env.PORT || 3001;
 
 // Configure CORS to only allow requests from your specific frontend domain
 const corsOptions = {
-    origin: process.env.FRONTEND_URL || 'https://your-frontend-domain.com', // Replace with your actual domain
+    origin: process.env.FRONTEND_URL || 'http://localhost:3000', // Replace with your actual domain
     exposedHeaders: ['X-Original-Size', 'X-Optimized-Size'], // Allow frontend to read these custom headers
     optionsSuccessStatus: 200 // For legacy browser compatibility
 };

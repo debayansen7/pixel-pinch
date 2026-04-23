@@ -22,3 +22,10 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+node_modules/
+api-requests.log
+test-image.jpeg
+test2_image.jpeg
+test.txt
+.env

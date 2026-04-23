@@ -7,7 +7,7 @@ const path = require('path');
 // Initialize the Express application
 const app = express();
 // Use the port provided by the host environment, or default to 3000 locally
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 
 // Configure Multer to store uploaded files in the computer's memory (RAM) temporarily, 
 // rather than saving them directly to the hard drive. This is faster for processing.

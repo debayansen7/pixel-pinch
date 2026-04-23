@@ -59,7 +59,7 @@ describe('Image Optimizer API', () => {
             .attach('image', largeFilePath);
 
         expect(response.status).toBe(400);
-        expect(response.body).toEqual({ error: 'File too large' });
+        expect(response.body).toEqual({ error: 'file size cannot be greater than 10 MB' });
 
         fs.unlinkSync(largeFilePath); // Clean up the dummy file
     }, 10000); // Increase timeout for this test as it handles a large file

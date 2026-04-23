@@ -2,6 +2,7 @@ const request = require('supertest');
 const app = require('./server'); // Import your express app
 const path = require('path');
 const fs = require('fs');
+const { error } = require('console');
 
 // The path to your test image. Make sure 'test-image.jpeg' exists in your project root.
 const testImagePath = path.join(__dirname, 'test-image.jpeg');
@@ -58,8 +59,8 @@ describe('Image Optimizer API', () => {
             .post('/optimize')
             .attach('image', largeFilePath);
 
-        expect(response.status).toBe(400);
-        expect(response.body).toEqual({ error: 'file size cannot be greater than 10 MB' });
+        expect(error.status).toBe(400);
+        expect(error.body).toEqual({ message: 'file size cannot be greater than 10 MB' });
 
         fs.unlinkSync(largeFilePath); // Clean up the dummy file
     }, 10000); // Increase timeout for this test as it handles a large file

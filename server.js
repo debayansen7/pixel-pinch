@@ -3,17 +3,47 @@ const multer = require('multer');
 const sharp = require('sharp');
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
+const rateLimit = require('express-rate-limit');
+const cors = require('cors');
+
+// Disable Sharp's internal cache to heavily reduce RAM usage on low-memory instances (like Render Free Tier)
+sharp.cache(false);
 
 // Initialize the Express application
 const app = express();
 // Use the port provided by the host environment, or default to 3000 locally
 const PORT = process.env.PORT || 3001;
 
-// Configure Multer to store uploaded files in the computer's memory (RAM) temporarily, 
-// rather than saving them directly to the hard drive. This is faster for processing.
-const storage = multer.memoryStorage();
+// Configure CORS to only allow requests from your specific frontend domain
+const corsOptions = {
+    origin: process.env.FRONTEND_URL || 'https://your-frontend-domain.com', // Replace with your actual domain
+    exposedHeaders: ['X-Original-Size', 'X-Optimized-Size'], // Allow frontend to read these custom headers
+    optionsSuccessStatus: 200 // For legacy browser compatibility
+};
+// Apply CORS middleware globally
+app.use(cors(corsOptions));
+
+// Trust the first proxy. Essential for Render or other environments behind a load balancer
+// so the rate limiter tracks the actual user's IP instead of the load balancer's IP.
+app.set('trust proxy', 1);
+
+// Configure rate limiting to protect against spam/abuse
+const limiter = rateLimit({
+    windowMs: 1 * 60 * 1000, // 1 minute window
+    max: 10, // Limit each IP to 10 requests per `window`
+    message: { error: 'Too many requests from this IP, please try again after a minute.' },
+    standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+    legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+});
+
+// Apply rate limiter globally to all requests
+app.use(limiter);
+
+// Configure Multer to store uploaded files on the disk temporarily.
+// This prevents Out of Memory (OOM) errors when handling multiple or large uploads.
 const upload = multer({
-    storage: storage,
+    dest: os.tmpdir(), // Use the operating system's default temporary directory
     limits: { fileSize: 10 * 1024 * 1024 }, // 10MB maximum file size
     fileFilter: (req, file, cb) => {
         if (file.mimetype.startsWith('image/')) {
@@ -77,7 +107,8 @@ app.post('/optimize', upload.single('image'), async (req, res) => {
         }
 
         // Start the Sharp image pipeline
-        let imagePipeline = sharp(req.file.buffer);
+        // We now pass the file path instead of the memory buffer
+        let imagePipeline = sharp(req.file.path);
 
         // If the user provided a width or height, resize the image
         if (width || height) {
@@ -110,9 +141,19 @@ app.post('/optimize', upload.single('image'), async (req, res) => {
         res.set('X-Optimized-Size', optimizedSize);
         res.send(optimizedImageBuffer);
 
+        // 7. Clean up the temporary file from the disk to free up space
+        fs.unlink(req.file.path, (err) => {
+            if (err) console.error('Failed to delete temp file:', err);
+        });
+
     } catch (error) {
         // If anything goes wrong (e.g., corrupt image file), we catch the error here
         console.error('Error processing image:', error);
+
+        // Ensure we still clean up the temp file even if Sharp fails
+        if (req.file && req.file.path) {
+            fs.unlink(req.file.path, () => { });
+        }
         res.status(500).json({ error: 'Failed to process the image.' });
     }
 });

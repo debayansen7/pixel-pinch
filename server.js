@@ -22,7 +22,7 @@ const swaggerOptions = {
     definition: {
         openapi: '3.0.0',
         info: {
-            title: 'PixelPinch Image Optimizer API',
+            title: 'PixelSqueez Image Optimizer API',
             version: '1.0.0',
             description: 'A fast and efficient RESTful API to format, compress, and resize images on the fly.',
         },

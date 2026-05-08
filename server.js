@@ -6,6 +6,8 @@ const path = require('path');
 const os = require('os');
 const rateLimit = require('express-rate-limit');
 const cors = require('cors');
+const swaggerUi = require('swagger-ui-express');
+const swaggerJsdoc = require('swagger-jsdoc');
 
 // Disable Sharp's internal cache to heavily reduce RAM usage on low-memory instances (like Render Free Tier)
 sharp.cache(false);
@@ -14,6 +16,27 @@ sharp.cache(false);
 const app = express();
 // Use the port provided by the host environment, or default to 3000 locally
 const PORT = process.env.PORT || 3001;
+
+// Configure Swagger Documentation
+const swaggerOptions = {
+    definition: {
+        openapi: '3.0.0',
+        info: {
+            title: 'PixelPinch Image Optimizer API',
+            version: '1.0.0',
+            description: 'A fast and efficient RESTful API to format, compress, and resize images on the fly.',
+        },
+        servers: [
+            {
+                url: `http://localhost:${PORT}`,
+                description: 'Local server',
+            },
+        ],
+    },
+    apis: [__filename], // Read definitions from comments in this file
+};
+const swaggerDocs = swaggerJsdoc(swaggerOptions);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 // Configure CORS to only allow requests from your specific frontend domain
 const corsOptions = {
@@ -77,6 +100,52 @@ app.use((req, res, next) => {
  * Our API Endpoint
  * It listens for POST requests at "http://localhost:3000/optimize"
  * "upload.single('image')" tells Multer to look for a file attached with the name 'image'
+ * 
+ * @swagger
+ * /optimize:
+ *   post:
+ *     summary: Optimize an uploaded image
+ *     description: Upload an image to format, compress, and resize it on the fly.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               image:
+ *                 type: string
+ *                 format: binary
+ *                 description: The image file to optimize (Max size 10MB).
+ *               format:
+ *                 type: string
+ *                 enum: [jpeg, png, webp, avif]
+ *                 default: webp
+ *                 description: The target output format.
+ *               quality:
+ *                 type: integer
+ *                 minimum: 1
+ *                 maximum: 100
+ *                 default: 80
+ *                 description: The compression quality level.
+ *               width:
+ *                 type: integer
+ *                 description: The desired max width of the output image in pixels.
+ *               height:
+ *                 type: integer
+ *                 description: The desired max height of the output image in pixels.
+ *     responses:
+ *       200:
+ *         description: The optimized image
+ *         content:
+ *           image/*:
+ *             schema:
+ *               type: string
+ *               format: binary
+ *       400:
+ *         description: Bad request (missing file, unsupported format, or invalid parameters)
+ *       500:
+ *         description: Internal server error
  */
 app.post('/optimize', upload.single('image'), async (req, res) => {
     try {
@@ -158,7 +227,26 @@ app.post('/optimize', upload.single('image'), async (req, res) => {
     }
 });
 
-// Endpoint to check API usage statistics
+/**
+ * Endpoint to check API usage statistics
+ * 
+ * @swagger
+ * /usage:
+ *   get:
+ *     summary: Retrieve API usage metrics
+ *     description: Returns the total number of times the `/optimize` endpoint has been used successfully.
+ *     responses:
+ *       200:
+ *         description: Total optimizations count
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 totalOptimizations:
+ *                   type: integer
+ *                   example: 5
+ */
 app.get('/usage', (req, res) => {
     res.json({ totalOptimizations: apiUsageCount });
 });

@@ -7,6 +7,9 @@
     "start": "node server.js",
     "test": "jest"
   },
+  "engines": {
+    "node": ">=18.17.0"
+  },
   "keywords": [],
   "author": "Debayan Sen",
   "license": "MIT",

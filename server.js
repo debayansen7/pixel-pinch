@@ -19,7 +19,7 @@ sharp.cache(false);
 // Initialize the Express application
 const app = express();
 // Use the port provided by the host environment, or default to 3000 locally
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 7187;
 
 // Configure Swagger Documentation
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));

@@ -2,8 +2,8 @@ const express = require('express');
 const sharp = require('sharp');
 const fs = require('fs');
 const path = require('path');
-const upload = require('./upload');
-const metrics = require('./metrics');
+const upload = require('../middleware/upload');
+const metrics = require('../utils/metrics');
 
 const router = express.Router();
 

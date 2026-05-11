@@ -1,9 +1,9 @@
 const express = require('express');
 const sharp = require('sharp');
 const fs = require('fs');
-const upload = require('./upload');
-const metrics = require('./metrics');
-const { THUMBNAIL_SIZES } = require('./constants');
+const upload = require('../middleware/upload');
+const metrics = require('../utils/metrics');
+const { THUMBNAIL_SIZES } = require('../config/constants');
 
 const router = express.Router();
 

@@ -29,3 +29,9 @@ test-image.jpeg
 test2_image.jpeg
 test.txt
 .env
+
+# Generated artifacts
+*.tmp
+*.zip
+thumbnail_*.png
+thumbnail_*.webp

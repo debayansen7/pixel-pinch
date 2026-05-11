@@ -3,9 +3,9 @@ const sharp = require('sharp');
 const fs = require('fs');
 const path = require('path');
 const archiver = require('archiver');
-const upload = require('./upload');
-const metrics = require('./metrics');
-const { THUMBNAIL_SIZES } = require('./constants');
+const upload = require('../middleware/upload');
+const metrics = require('../utils/metrics');
+const { THUMBNAIL_SIZES } = require('../config/constants');
 
 const router = express.Router();
 

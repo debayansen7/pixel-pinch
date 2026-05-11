@@ -1,5 +1,5 @@
 const express = require('express');
-const metrics = require('./metrics');
+const metrics = require('../utils/metrics');
 
 const router = express.Router();
 

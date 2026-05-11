@@ -6,12 +6,12 @@ const path = require('path');
 const rateLimit = require('express-rate-limit');
 const cors = require('cors');
 const swaggerUi = require('swagger-ui-express');
-const swaggerDocs = require('./swagger');
+const swaggerDocs = require('./src/config/swagger');
 
-const optimizeRoute = require('./optimize');
-const thumbnailRoute = require('./thumbnail');
-const thumbnailsRoute = require('./thumbnails');
-const usageRoute = require('./usage');
+const optimizeRoute = require('./src/routes/optimize');
+const thumbnailRoute = require('./src/routes/thumbnail');
+const thumbnailsRoute = require('./src/routes/thumbnails');
+const usageRoute = require('./src/routes/usage');
 
 // Disable Sharp's internal cache to heavily reduce RAM usage on low-memory instances (like Render Free Tier)
 sharp.cache(false);

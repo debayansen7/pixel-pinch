@@ -1,10 +1,10 @@
 const request = require('supertest');
-const app = require('./server'); // Import your express app
+const app = require('../server'); // Import your express app
 const path = require('path');
 const fs = require('fs');
 
 // The path to your test image. Make sure 'test-image.jpeg' exists in your project root.
-const testImagePath = path.join(__dirname, 'test-image.jpeg');
+const testImagePath = path.join(__dirname, '..', 'test-image.jpeg');
 
 describe('Image Optimizer API', () => {
 
@@ -34,7 +34,7 @@ describe('Image Optimizer API', () => {
 
     // Test for invalid file type (e.g., a text file)
     it('should return a 400 error for non-image file types', async () => {
-        const nonImagePath = path.join(__dirname, 'test.txt');
+        const nonImagePath = path.join(__dirname, '..', 'test.txt');
         fs.writeFileSync(nonImagePath, 'this is not an image');
 
         const response = await request(app)
@@ -49,7 +49,7 @@ describe('Image Optimizer API', () => {
 
     // Test for file size limit
     it('should return a 400 error if the uploaded file exceeds the size limit', async () => {
-        const largeFilePath = path.join(__dirname, 'test2_image.jpeg');
+        const largeFilePath = path.join(__dirname, '..', 'test2_image.jpeg');
         // Create a dummy buffer that is > 10MB
         const largeBuffer = Buffer.alloc(11 * 1024 * 1024);
         fs.writeFileSync(largeFilePath, largeBuffer);
